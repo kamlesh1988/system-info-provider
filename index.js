@@ -7,6 +7,7 @@ var fs = require('fs');
 var url = require('url');
 
 var http = require('http');
+var PORT = process.env.PORT || 5000;
 
 //create a server object:
 http.createServer(function (req, res) {
@@ -14,24 +15,25 @@ http.createServer(function (req, res) {
     // res.write(req.url);
     res.write(JSON.stringify(getSystemInfo())); //write a response to the client
     res.end(); //end the response
-}).listen(5000);
+}).listen(PORT);
 
 function getSystemInfo() {
     var sysinfo = {};
 
     sysinfo.hostname = os.hostname();
     // console.log(os.networkInterfaces().tun0);
+    sysinfo.network = os.networkInterfaces();
 
     sysinfo.os = {};
     sysinfo.os.release = os.release();
     sysinfo.os.platform = os.platform();
     sysinfo.os.arch = os.arch();
-    console.log(os.loadavg());
+    // console.log(os.loadavg());
     sysinfo.cpu = {};
     sysinfo.cpu.run_queue_1 = os.loadavg()[0].toFixed(2);
     sysinfo.cpu.run_queue_5 = os.loadavg()[1].toFixed(2);
     sysinfo.cpu.run_queue_15 = os.loadavg()[2].toFixed(2);
-    console.log(sysinfo.cpu);
+    // console.log(sysinfo.cpu);
     sysinfo.memory = {};
     sysinfo.memory.total = os.totalmem();
     sysinfo.memory.free = os.freemem();
@@ -65,3 +67,6 @@ function getSwap() {
     });
     return swapinfo;
 };
+
+console.log(`started server on ${PORT}`);
+console.log(`current system info ${JSON.stringify(getSystemInfo())}`);
