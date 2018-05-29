@@ -5,17 +5,40 @@
 var os = require('os');
 var fs = require('fs');
 var url = require('url');
+var HttpDispatcher = require('httpdispatcher');
+var dispatcher = new HttpDispatcher();
 
 var http = require('http');
 var PORT = process.env.PORT || 5000;
 
 //create a server object:
 http.createServer(function (req, res) {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    // res.write(req.url);
-    res.write(JSON.stringify(getSystemInfo())); //write a response to the client
-    res.end(); //end the response
+    dispatcher.dispatch(req, res);
 }).listen(PORT);
+
+dispatcher.onGet("/api/memory", function (req, res) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(getMemory()));
+});
+
+dispatcher.onGet("/api/cpu", function (req, res) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(getCPU()));
+});
+
+
+dispatcher.onGet("/api/info", function (req, res) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    let result = {};
+    result.memory = getMemory();
+    result.cpu = getCPU();
+    res.end(JSON.stringify(result));
+});
+
+dispatcher.onGet("/api/info/all", function (req, res) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(getSystemInfo()));
+});
 
 function getSystemInfo() {
     var sysinfo = {};
@@ -29,15 +52,9 @@ function getSystemInfo() {
     sysinfo.os.platform = os.platform();
     sysinfo.os.arch = os.arch();
     // console.log(os.loadavg());
-    sysinfo.cpu = {};
-    sysinfo.cpu.run_queue_1 = os.loadavg()[0].toFixed(2);
-    sysinfo.cpu.run_queue_5 = os.loadavg()[1].toFixed(2);
-    sysinfo.cpu.run_queue_15 = os.loadavg()[2].toFixed(2);
+    sysinfo.cpu = getCPU(sysinfo);
     // console.log(sysinfo.cpu);
-    sysinfo.memory = {};
-    sysinfo.memory.total = os.totalmem();
-    sysinfo.memory.free = os.freemem();
-    sysinfo.memory.used_perc = (100 - ((os.totalmem() - os.freemem()) / os.totalmem() * 100)).toFixed(2);
+    sysinfo.memory = getMemory();
 
     /**
      * Gets Swap info out of /proc/swaps on Linux systems.
@@ -48,6 +65,24 @@ function getSystemInfo() {
 
     // console.log(sysinfo);
     return sysinfo;
+
+
+}
+
+function getMemory() {
+    let memory = {};
+    memory.total = os.totalmem();
+    memory.free = os.freemem();
+    memory.used_perc = (100 - ((os.totalmem() - os.freemem()) / os.totalmem() * 100)).toFixed(2);
+    return memory;
+}
+
+function getCPU() {
+    let cpu = {};
+    cpu.run_queue_1 = os.loadavg()[0].toFixed(2);
+    cpu.run_queue_5 = os.loadavg()[1].toFixed(2);
+    cpu.run_queue_15 = os.loadavg()[2].toFixed(2);
+    return cpu;
 }
 
 function getSwap() {
