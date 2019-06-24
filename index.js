@@ -3,6 +3,8 @@
  */
 
 var os = require('os');
+var osu = require('node-os-utils');
+var mem = osu.mem;
 var fs = require('fs');
 var url = require('url');
 var HttpDispatcher = require('httpdispatcher');
@@ -18,7 +20,9 @@ http.createServer(function (req, res) {
 
 dispatcher.onGet("/api/memory", function (req, res) {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(getMemory()));
+    getMemoryV2(function(currentMemory) {
+        res.end(JSON.stringify(currentMemory));
+    });
 });
 
 dispatcher.onGet("/api/cpu", function (req, res) {
@@ -29,10 +33,22 @@ dispatcher.onGet("/api/cpu", function (req, res) {
 
 dispatcher.onGet("/api/info", function (req, res) {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    let result = {};
-    result.memory = getMemory();
-    result.cpu = getCPU();
-    res.end(JSON.stringify(result));
+    getMemoryV2(function(currentMemory) {
+        let result = {};
+        result.memory = currentMemory;
+        result.cpu = getCPU();
+        res.end(JSON.stringify(result));
+    });
+});
+
+dispatcher.onGet("/api/info", function (req, res) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    getMemoryV2(function(currentMemory) {
+        let result = {};
+        result.memory = currentMemory;
+        result.cpu = getCPU();
+        res.end(JSON.stringify(result));
+    });
 });
 
 dispatcher.onGet("/api/info/all", function (req, res) {
@@ -75,6 +91,17 @@ function getMemory() {
     memory.free = os.freemem();
     memory.used_perc = (100 - ((os.totalmem() - os.freemem()) / os.totalmem() * 100)).toFixed(2);
     return memory;
+}
+
+function getMemoryV2(done) {
+    mem.info().then(info => {
+        let memory = {};
+        console.log(info)
+        memory.total = (info.totalMemMb * 1024 * 1024).toFixed(0);
+        memory.free = (info.freeMemMb * 1024 * 1024).toFixed(0);
+        memory.used_perc = (100 - info.freeMemPercentage).toFixed(2);
+        done(memory);
+    });
 }
 
 function getCPU() {

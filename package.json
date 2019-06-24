@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "httpdispatcher": "^2.1.2"
+    "httpdispatcher": "^2.1.2",
+    "node-os-utils": "^1.0.7"
   }
 }
